@@ -1,9 +1,6 @@
 import random
 
 
-# random.seed(42)
-
-
 class Problem:
     def __init__(self, elements: list[int]):
         self.elements = elements
@@ -28,7 +25,7 @@ class Solution:
         self.p = problem
         self.multiset: list[list[int]]
         self.make_multiset(self.p.elements.copy())
-       
+
     def make_multiset(self, elements: list[int]):
         self.multiset = [
             elements[i: i+3]
@@ -59,8 +56,10 @@ class Solution:
                                          self.multiset[midx1][elem1])
 
 
-p = Solution(Problem([1, 2, 3, 4, 5, 6]))
-p.random_shuffle()
-print(p.multiset)
-p.random_modify()
-print(p.multiset)
+if __name__ == "__init__":
+    p = Solution(Problem([1, 2, 3, 4, 5, 6]))
+    random.seed(42)
+    p.random_shuffle()
+    print(p.multiset)
+    p.random_modify()
+    print(p.multiset)

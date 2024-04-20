@@ -1,0 +1,7 @@
+__pycache__
+*.zip
+.vscode/
+*.pyc
+env*/
+.env
+README.txt
