@@ -7,7 +7,7 @@ The 3-partition problem is a strongly NP-complete problem in computer science. T
 #### Examples
  - ``` {1, 2, 3, 4, 5, 7} -> {1, 7, 3} {2, 4, 5} m=2 T=11 ```
  - ``` {4, 5, 5, 5, 5, 6} -> {4, 5, 6} {5, 5, 5} m=2 T=15 ```
-
+ - ``` {1, 2, 3, 3, 8, 9, 9, 9, 16} -> {2, 9, 9} {1, 3, 16} {8, 9, 3} m=3 T=20 ```
 
 ## Project
 
