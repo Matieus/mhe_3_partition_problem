@@ -35,6 +35,9 @@ class Solution:
         self.goal()
 
     def __str__(self):
+        return ", ".join([str(number) for number in self.multiset])
+
+    def __repr__(self) -> str:
         return ", ".join(
             [
                 f"{self.multiset[idx:idx+3]}"
@@ -107,13 +110,16 @@ def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         def wrapper(*args: Any, **kwargs: Any) -> T:
             print("-"*32, name if name else func.__name__, sep="\n")
-            result = func(*args, **kwargs)
-            print(f"{'problem:':.>12} {result.__getattribute__('p')}")
-            print(f"{'result:':.>12} {str(result)}")
-            print(f"{'goal:':.>12} {result.__getattribute__('current_goal')}")
-            print(f"{'sum-T:':.>12} {result.__getattribute__('p').__getattribute__('t')}")
-            print(f"{'seed:':.>12} {args[0].__getattribute__('seed')}")
 
+            result = func(*args, **kwargs)
+            print(f"{'problem:':.>12} {result.__getattribute__('p')}")            
+            print(f"{'result:':.>12} {result!r}")
+            print(f"{'goal:':.>12} {result.__getattribute__('current_goal')}")
+            print(
+                f"{'sum-T:':.>12}",
+                f"{result.__getattribute__('p').__getattribute__('t')}"
+                )
+            print(f"{'seed:':.>12} {args[0].__getattribute__('seed')}")
 
             return result
         return wrapper
@@ -121,13 +127,21 @@ def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..
 
 
 class Solver:
-    def __init__(self, problem: Problem, seed: int | str | float | None, shuffle: bool):
+    def __init__(
+            self,
+            problem: Problem,
+            seed: int | str | float | None = None,
+            shuffle: bool = True
+            ):
+
         self.p = problem
         self.seed = seed
         self.shuffle = shuffle
 
-        random.seed(seed)
-        self.p.random_shuffle()
+        if seed:
+            random.seed(seed)
+        if shuffle:
+            self.p.random_shuffle()
 
     @results("BRUTE FORCE")
     def brute_force(self) -> Solution:
@@ -175,7 +189,7 @@ class Solver:
 
 
 if __name__ == "__main__":
-    s = Solver(Problem([1, 2, 3, 3, 6, 4, 8, 9, 9, 9, 10, 16]), 42, False)
+    s = Solver(Problem([1, 2, 3, 3, 6, 4, 8, 9, 9, 9, 10, 16]), 32, True)
     result: Solution = s.brute_force()
 
     result: Solution = s.random_hill_climb()
