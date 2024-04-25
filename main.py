@@ -103,13 +103,14 @@ class Solution:
 T = TypeVar('T')
 
 
-def debug(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         def wrapper(*args: Any, **kwargs: Any) -> T:
-            print(name if name else func.__name__)
+            print("-"*32, name if name else func.__name__, sep="\n")
             result = func(*args, **kwargs)
+            print(f"{'problem:':>10} {result.__getattribute__('p')}")
             print(f"{'result:':>10} {str(result)}")
-
+            print(f"{'goal:':>10} {result.__getattribute__('current_goal')}")
             return result
         return wrapper
     return decorator
@@ -122,7 +123,7 @@ class Solver:
         self.shuffle = shuffle
         random.seed(seed)
 
-    @debug("BRUTE FORCE")
+    @results("BRUTE FORCE")
     def brute_force(self) -> Solution:
         solution = Solution(self.p)
 
@@ -140,7 +141,7 @@ class Solver:
 
         return best_solution
 
-    @debug("DETERMINISTIC HILL CLIMB")
+    @results("DETERMINISTIC HILL CLIMB")
     def deterministic_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
@@ -153,7 +154,7 @@ class Solver:
 
         return solution
 
-    @debug("RANDOM HILL CLIMB")
+    @results("RANDOM HILL CLIMB")
     def random_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
@@ -170,10 +171,7 @@ class Solver:
 if __name__ == "__main__":
     s = Solver(Problem([1, 2, 3, 3, 6, 4, 8, 9, 9, 9, 10, 16]), 42, False)
     result: Solution = s.brute_force()
-    print(result, result.current_goal)
 
     result: Solution = s.random_hill_climb()
-    print(result, result.current_goal)
 
     result: Solution = s.deterministic_hill_climb()
-    print(result, result.current_goal)
