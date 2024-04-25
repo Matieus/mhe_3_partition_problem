@@ -1,5 +1,6 @@
 import random
 from itertools import permutations
+from typing import Any, Callable, TypeVar
 
 
 class Problem:
@@ -23,19 +24,6 @@ class Problem:
     def random_shuffle(self):
         random.shuffle(self.elements)
 
-    def goal(self, elements: list[int]):
-        triplets_sum: list[int] = [
-            sum(self.elements[idx:idx+3])
-            for idx in range(0, len(self.elements), 3)
-            ]
-
-        self.current_goal = sum(
-            [
-                1 if x == self.t else 0.5/abs(self.t - x)
-                for x in triplets_sum
-            ]
-        )/len(self.elements)*3
-
 
 class Solution:
     def __init__(self, problem: Problem):
@@ -43,7 +31,7 @@ class Solution:
         self.multiset: list[int]
         self.make_multiset(self.p.elements.copy())
 
-        self.current_goal: float
+        self.current_goal: float = 0
         self.goal()
 
     def __str__(self):
@@ -112,14 +100,32 @@ class Solution:
         return self.multiset
 
 
+T = TypeVar('T')
+
+
+def debug(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        def wrapper(*args: Any, **kwargs: Any) -> T:
+            print(name if name else func.__name__)
+            result = func(*args, **kwargs)
+            print(f"{'result:':>10} {str(result)}")
+
+            return result
+        return wrapper
+    return decorator
+
+
 class Solver:
     def __init__(self, problem: Problem, seed: int | str | float | None, shuffle: bool):
         self.p = problem
         self.p.random_shuffle()
+        self.shuffle = shuffle
         random.seed(seed)
 
-    def brute_force(self):
+    @debug("BRUTE FORCE")
+    def brute_force(self) -> Solution:
         solution = Solution(self.p)
+
         best_solution = Solution(self.p)
         perm = permutations(solution.multiset)
 
@@ -134,7 +140,8 @@ class Solver:
 
         return best_solution
 
-    def deterministic_hill_climb(self):
+    @debug("DETERMINISTIC HILL CLIMB")
+    def deterministic_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
         for _ in range(5040):
@@ -146,7 +153,8 @@ class Solver:
 
         return solution
 
-    def random_hill_climb(self):
+    @debug("RANDOM HILL CLIMB")
+    def random_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
         for _ in range(5040):
@@ -161,14 +169,11 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(Problem([1, 2, 3, 3, 6, 4, 8, 9, 9, 9, 10, 16]), 42, False)
-    print(s.p)
-    result = s.brute_force()
+    result: Solution = s.brute_force()
     print(result, result.current_goal)
 
-    print(s.p)
-    result = s.random_hill_climb()
+    result: Solution = s.random_hill_climb()
     print(result, result.current_goal)
 
-    print(s.p)
-    result = s.deterministic_hill_climb()
+    result: Solution = s.deterministic_hill_climb()
     print(result, result.current_goal)
