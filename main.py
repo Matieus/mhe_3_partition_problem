@@ -108,9 +108,13 @@ def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..
         def wrapper(*args: Any, **kwargs: Any) -> T:
             print("-"*32, name if name else func.__name__, sep="\n")
             result = func(*args, **kwargs)
-            print(f"{'problem:':>10} {result.__getattribute__('p')}")
-            print(f"{'result:':>10} {str(result)}")
-            print(f"{'goal:':>10} {result.__getattribute__('current_goal')}")
+            print(f"{'problem:':.>12} {result.__getattribute__('p')}")
+            print(f"{'result:':.>12} {str(result)}")
+            print(f"{'goal:':.>12} {result.__getattribute__('current_goal')}")
+            print(f"{'sum-T:':.>12} {result.__getattribute__('p').__getattribute__('t')}")
+            print(f"{'seed:':.>12} {args[0].__getattribute__('seed')}")
+
+
             return result
         return wrapper
     return decorator
@@ -119,9 +123,11 @@ def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..
 class Solver:
     def __init__(self, problem: Problem, seed: int | str | float | None, shuffle: bool):
         self.p = problem
-        self.p.random_shuffle()
+        self.seed = seed
         self.shuffle = shuffle
+
         random.seed(seed)
+        self.p.random_shuffle()
 
     @results("BRUTE FORCE")
     def brute_force(self) -> Solution:
