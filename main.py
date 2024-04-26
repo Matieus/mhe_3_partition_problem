@@ -138,13 +138,18 @@ class Solver:
     def __init__(
         self,
         problem: Problem,
+        *,
         seed: int | str | float | None = None,
         shuffle: bool = True,
+        iterations: int = 720,
+        stop_on_best_solution: bool = True
     ):
 
-        self.p = problem
-        self.seed = seed
-        self.shuffle = shuffle
+        self.p: Problem = problem
+        self.seed: int | str | float | None = seed
+        self.shuffle: bool = shuffle
+        self.iterations: int = iterations
+        self.stop_on_best_solution: bool = stop_on_best_solution
 
         if seed:
             random.seed(seed)
@@ -158,26 +163,25 @@ class Solver:
         best_solution = Solution(self.p)
         perm = permutations(solution.multiset)
 
-        for _ in range(1000000):
-            solution.make_multiset(list(perm.__next__()))
+        for permutation in perm:
+            solution.make_multiset(list(permutation))
 
             if best_solution.current_goal < solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
-            if best_solution.current_goal == 1.0:
+            if best_solution.current_goal and self.stop_on_best_solution:
                 break
-
         return best_solution
 
     @results("DETERMINISTIC HILL CLIMB")
     def deterministic_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
-        for _ in range(5040):
+        for _ in range(self.iterations):
             solution.generate_neighbours()
             solution.make_multiset(solution.best_neighbour())
 
-            if solution.current_goal == 1:
+            if solution.current_goal and self.stop_on_best_solution:
                 break
 
         return solution
@@ -186,18 +190,18 @@ class Solver:
     def random_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
-        for _ in range(5040):
+        for _ in range(self.iterations):
             solution.random_modify()
             solution.make_multiset(solution.multiset)
 
-            if solution.current_goal == 1:
+            if solution.current_goal and self.stop_on_best_solution:
                 break
 
         return solution
 
 
 if __name__ == "__main__":
-    s = Solver(Problem([1, 2, 3, 3, 6, 4, 8, 9, 9, 9, 10, 16]), 32, True)
+    s = Solver(Problem([1, 2, 3, 4, 5, 7]), seed=32, shuffle=True)
     result: Solution = s.brute_force()
 
     result: Solution = s.random_hill_climb()
