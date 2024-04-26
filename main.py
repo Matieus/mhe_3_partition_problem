@@ -19,7 +19,7 @@ class Problem:
             ...
 
     def sum_t(self) -> float:
-        return sum(self.elements)//(len(self.elements)/3)
+        return sum(self.elements) // (len(self.elements) / 3)
 
     def random_shuffle(self):
         random.shuffle(self.elements)
@@ -39,10 +39,7 @@ class Solution:
 
     def __repr__(self) -> str:
         return ", ".join(
-            [
-                f"{self.multiset[idx:idx+3]}"
-                for idx in range(0, len(self.multiset), 3)
-            ]
+            [f"{self.multiset[idx:idx+3]}" for idx in range(0, len(self.multiset), 3)]
         )
 
     def make_multiset(self, elements: list[int]):
@@ -51,16 +48,14 @@ class Solution:
 
     def goal(self):
         triplets_sum: list[int] = [
-            sum(self.multiset[idx:idx+3])
-            for idx in range(0, len(self.multiset), 3)
-            ]
+            sum(self.multiset[idx : idx + 3]) for idx in range(0, len(self.multiset), 3)
+        ]
 
-        self.current_goal = sum(
-            [
-                1 if x == self.p.t else 0.5/abs(self.p.t - x)
-                for x in triplets_sum
-            ]
-        )/len(self.multiset)*3
+        self.current_goal = (
+            sum([1 if x == self.p.t else 0.5 / abs(self.p.t - x) for x in triplets_sum])
+            / len(self.multiset)
+            * 3
+        )
 
     def random_shuffle(self):
         new_solution = self.p.elements.copy()
@@ -71,12 +66,13 @@ class Solution:
         midx1 = random.randint(0, len(self.multiset) - 1)
         midx2 = random.randint(0, len(self.multiset) - 1)
 
-        while midx2//3 == midx1//3:
+        while midx2 // 3 == midx1 // 3:
             midx2: int = random.randint(0, len(self.multiset) - 1)
 
-        (self.multiset[midx1],
-         self.multiset[midx2]) = (self.multiset[midx2],
-                                  self.multiset[midx1])
+        (self.multiset[midx1], self.multiset[midx2]) = (
+            self.multiset[midx2],
+            self.multiset[midx1],
+        )
         self.goal()
 
     def generate_neighbours(self):
@@ -85,10 +81,12 @@ class Solution:
 
         for eidx1 in range(0, len(self.multiset)):
             for eidx2 in range(0, len(self.multiset)):
-                if not (eidx1//3 == eidx2//3):
+                if not (eidx1 // 3 == eidx2 // 3):
                     new_neighbour = self.multiset.copy()
                     (new_neighbour[eidx1], new_neighbour[eidx2]) = (
-                        new_neighbour[eidx2], new_neighbour[eidx1])
+                        new_neighbour[eidx2],
+                        new_neighbour[eidx1],
+                    )
                     if new_neighbour not in self.neighbours:
 
                         self.neighbours.append(new_neighbour)
@@ -103,36 +101,38 @@ class Solution:
         return self.multiset
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         def wrapper(*args: Any, **kwargs: Any) -> T:
-            print("-"*32, name if name else func.__name__, sep="\n")
+            print("-" * 32, name if name else func.__name__, sep="\n")
 
             result = func(*args, **kwargs)
-            print(f"{'problem:':.>12} {result.__getattribute__('p')}")            
+            print(f"{'problem:':.>12} {result.__getattribute__('p')}")
             print(f"{'result:':.>12} {result!r}")
             print(f"{'goal:':.>12} {result.__getattribute__('current_goal')}")
             print(
                 f"{'sum-T:':.>12}",
-                f"{result.__getattribute__('p').__getattribute__('t')}"
-                )
+                f"{result.__getattribute__('p').__getattribute__('t')}",
+            )
             print(f"{'seed:':.>12} {args[0].__getattribute__('seed')}")
 
             return result
+
         return wrapper
+
     return decorator
 
 
 class Solver:
     def __init__(
-            self,
-            problem: Problem,
-            seed: int | str | float | None = None,
-            shuffle: bool = True
-            ):
+        self,
+        problem: Problem,
+        seed: int | str | float | None = None,
+        shuffle: bool = True,
+    ):
 
         self.p = problem
         self.seed = seed
