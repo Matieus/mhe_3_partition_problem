@@ -7,16 +7,24 @@ class Problem:
     def __init__(self, elements: list[int]):
         self.elements = elements
         self.t = self.sum_t()
+        self.m = int(len(self.elements)/3)
+        self.sum = sum(self.elements)
+        self.check_problem()
 
     def __str__(self):
         return ", ".join([str(number) for number in self.elements])
 
     def check_problem(self):
         if not len(self.elements):
-            ...
+            ValueError("The problem length cannot be zero")
 
-        elif not len(self.elements) % 3:
-            ...
+        if not len(self.elements) % 3 == 0:
+            raise ValueError("Invalid problem length. The length should be divisible by 3")
+
+        if self.sum != self.t*self.m:
+            raise ValueError(
+                f"sum != m*T {sum(self.elements)} != {self.t*self.m}"
+                )
 
     def sum_t(self) -> float:
         return sum(self.elements) // (len(self.elements) / 3)
