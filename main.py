@@ -15,8 +15,8 @@ class Problem:
         return ", ".join([str(number) for number in self.elements])
 
     def check_problem(self):
-        if not len(self.elements):
-            ValueError("The problem length cannot be zero")
+        if len(self.elements) < 6:
+            raise ValueError("The problem length cannot be zero")
 
         if not len(self.elements) % 3 == 0:
             raise ValueError("Invalid problem length. The length should be divisible by 3")
