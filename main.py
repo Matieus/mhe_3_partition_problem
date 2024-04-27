@@ -43,7 +43,8 @@ class RandomProblem(Problem):
             t: int,
             *,
             min_value: int | None = None,
-            max_value: int | None = None
+            max_value: int | None = None,
+            attempts: int = 20
             ):
         self.elements: list[int] = []
         self.m = m
@@ -51,6 +52,7 @@ class RandomProblem(Problem):
 
         self.min = self.min if isinstance(min_value, int) else int(self.t/4)
         self.max = self.max if isinstance(max_value, int) else int(self.t/2)
+        self.attempts = attempts
 
         self._generate_elements()
         self.sum = sum(self.elements)
@@ -61,8 +63,10 @@ class RandomProblem(Problem):
         for _ in range(self.m*3):
             self.elements.append(random.randint(self.min, self.max))
 
-        while sum(self.elements) / self.m != self.t:
+        for _ in range(self.attempts):
             self.elements[random.randint(0, len(self.elements) - 1)] = random.randint(self.min, self.max)
+            if sum(self.elements) / self.m == self.t:
+                break
 
 
 class Solution:
@@ -131,8 +135,8 @@ class Solution:
                         self.neighbours.append(new_neighbour)
 
     def best_neighbour(self):
-        new_neighbour = Solution(Problem(self.multiset.copy()))
-        best_neighbour = Solution(Problem(self.multiset.copy()))
+        new_neighbour = Solution(self.p)
+        best_neighbour = Solution(self.p)
 
         for neighbour in self.neighbours:
             new_neighbour.make_multiset(neighbour)
@@ -243,7 +247,7 @@ class Solver:
                 return best_solution
 
             solution.make_multiset(solution.best_neighbour())
-            if solution.current_goal >= best_solution.current_goal:
+            if solution.current_goal > best_solution.current_goal:
                 best_solution.make_multiset(solution.multiset)
 
             if solution.multiset not in tabu_set:
@@ -258,7 +262,7 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        RandomProblem(5, 30),
+        RandomProblem(6, 50, attempts=100),
         shuffle=True,
         stop_on_best_solution=True,
         iterations=5040
