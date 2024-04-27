@@ -132,6 +132,9 @@ class Solver:
         if shuffle:
             self.p.random_shuffle()
 
+    def stopper(self, goal: float) -> bool:
+        return goal == 1.0 and self.stop_on_best_solution
+
     @results("BRUTE FORCE")
     @timer
     def brute_force(self) -> Solution:
@@ -148,7 +151,7 @@ class Solver:
             if best_solution.current_goal < solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
-            if best_solution.current_goal and self.stop_on_best_solution:
+            if self.stopper(best_solution.current_goal):
                 break
         return best_solution
 
@@ -156,29 +159,36 @@ class Solver:
     @timer
     def deterministic_hill_climb(self) -> Solution:
         solution = Solution(self.p)
+        best_solution = Solution(self.p)
 
         for _ in range(self.iterations):
             solution.generate_neighbours()
             solution.make_multiset(solution.best_neighbour())
+            
+            if best_solution.current_goal <= solution.current_goal:
+                best_solution.make_multiset(solution.multiset)
 
-            if solution.current_goal and self.stop_on_best_solution:
+            if self.stopper(best_solution.current_goal):
                 break
 
-        return solution
+        return best_solution
 
     @results("RANDOM HILL CLIMB")
     @timer
     def random_hill_climb(self) -> Solution:
         solution = Solution(self.p)
+        best_solution = Solution(self.p)
 
         for _ in range(self.iterations):
             solution.random_modify()
-            solution.make_multiset(solution.multiset)
 
-            if solution.current_goal and self.stop_on_best_solution:
+            if best_solution.current_goal <= solution.current_goal:
+                best_solution.make_multiset(solution.multiset)
+
+            if self.stopper(best_solution.current_goal):
                 break
 
-        return solution
+        return best_solution
 
     @results("TABU SEARCH")
     @timer
@@ -197,6 +207,7 @@ class Solver:
 
             if len(solution.neighbours) == 0:
                 # "Ate my tail..."
+                print("Ate my tail...")
                 return best_solution
 
             solution.make_multiset(solution.best_neighbour())
@@ -206,7 +217,7 @@ class Solver:
             if solution.multiset not in tabu_set:
                 tabu_set.append(solution.multiset)
 
-            if best_solution.current_goal and self.stop_on_best_solution:
+            if self.stopper(best_solution.current_goal):
                 break
 
         return best_solution
@@ -215,10 +226,9 @@ class Solver:
 if __name__ == "__main__":
     s = Solver(
         Problem([1, 2, 3, 4, 5, 7, 8, 2, 1]),
-        iterations=362_880,
-        seed=42,
+        iterations=100,
         shuffle=True,
-        stop_on_best_solution=False
+        stop_on_best_solution=True
         )
 
     result: Solution = s.brute_force()
