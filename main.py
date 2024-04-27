@@ -185,13 +185,12 @@ class Solver:
 
         for _ in range(self.iterations):
             solution.generate_neighbours()
-            print(len(solution.neighbours))
             solution.neighbours = [
                 neighbour for neighbour in solution.neighbours
                 if neighbour not in tabu_set]
 
             if len(solution.neighbours) == 0:
-                print("Ate my tail...", best_solution)
+                # "Ate my tail..."
                 return best_solution
 
             solution.make_multiset(solution.best_neighbour())
@@ -208,7 +207,12 @@ class Solver:
 
 
 if __name__ == "__main__":
-    s = Solver(Problem([1, 2, 3, 4, 5, 7]), seed=42, shuffle=True, stop_on_best_solution=True)
+    s = Solver(
+        Problem([1, 2, 3, 4, 5, 7]),
+        seed=42,
+        shuffle=True,
+        stop_on_best_solution=True
+        )
 
     result: Solution = s.brute_force()
 
