@@ -44,7 +44,8 @@ class RandomProblem(Problem):
             *,
             min_value: int | None = None,
             max_value: int | None = None,
-            attempts: int = 20
+            attempts: int = 20,
+            seed: int = 42
             ):
         self.elements: list[int] = []
         self.m = m
@@ -53,6 +54,8 @@ class RandomProblem(Problem):
         self.min = self.min if isinstance(min_value, int) else int(self.t/4)
         self.max = self.max if isinstance(max_value, int) else int(self.t/2)
         self.attempts = attempts
+        self.seed = seed
+        random.seed(self.seed)
 
         self._generate_elements()
         self.sum = sum(self.elements)
@@ -167,7 +170,7 @@ class Solver:
         if shuffle:
             self.p.random_shuffle()
 
-    def stopper(self, goal: float) -> bool:
+    def _stopper(self, goal: float) -> bool:
         return goal == 1.0 and self.stop_on_best_solution
 
     @results("BRUTE FORCE")
@@ -184,7 +187,7 @@ class Solver:
             if best_solution.current_goal < solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
-            if self.stopper(best_solution.current_goal):
+            if self._stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
                 break
         return best_solution
@@ -202,7 +205,7 @@ class Solver:
             if best_solution.current_goal <= solution.current_goal:
                 best_solution.make_multiset(solution.multiset)
 
-            if self.stopper(best_solution.current_goal):
+            if self._stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
                 break
 
@@ -220,7 +223,7 @@ class Solver:
             if best_solution.current_goal <= solution.current_goal:
                 best_solution.make_multiset(solution.multiset)
 
-            if self.stopper(best_solution.current_goal):
+            if self._stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
                 break
 
@@ -247,12 +250,12 @@ class Solver:
                 return best_solution
 
             solution.make_multiset(solution.best_neighbour())
-            if solution.current_goal > best_solution.current_goal:
+            if solution.current_goal >= best_solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
             tabu_set.add(tuple(solution.multiset.copy()))
 
-            if self.stopper(best_solution.current_goal):
+            if self._stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
                 break
 
@@ -261,10 +264,11 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        RandomProblem(6, 50, attempts=100),
+        Problem([1, 13, 1, 10, 2, 3, 5, 5, 5, 6, 3, 6, 9, 4, 2, 11, 1, 3]),
         shuffle=True,
         stop_on_best_solution=True,
-        iterations=5040
+        iterations=5040,
+        seed=500
         )
 
     result: Solution = s.brute_force()
