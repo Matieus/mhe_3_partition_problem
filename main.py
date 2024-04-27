@@ -61,8 +61,7 @@ class Solution:
 
         self.current_goal = (
             sum([1 if x == self.p.t else 0.5 / abs(self.p.t - x) for x in triplets_sum])
-            / len(self.multiset)
-            * 3
+            / self.p.m
         )
 
     def random_shuffle(self):
@@ -225,7 +224,7 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        Problem([1, 2, 3, 4, 5, 7, 8, 2, 1]),
+        Problem([1, 2, 3, 4, 5, 7]),
         iterations=100,
         shuffle=True,
         stop_on_best_solution=True
