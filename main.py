@@ -22,8 +22,12 @@ class Problem:
             raise ValueError("Invalid problem length. The length should be divisible by 3")
 
         if self.sum != self.t*self.m:
-            raise ValueError(
-                f"sum != m*T {sum(self.elements)} != {self.t*self.m}"
+            print(
+                f"Problem:  {self.elements}",
+                "There is no partition such that for all triplets \
+                    the sum of the elements in each triplet is equal to T",
+                f"sum != m*T {sum(self.elements)} != {self.t*self.m}",
+                sep="\n"
                 )
 
     def sum_t(self) -> float:
@@ -31,6 +35,34 @@ class Problem:
 
     def random_shuffle(self):
         random.shuffle(self.elements)
+
+
+class RandomProblem(Problem):
+    def __init__(
+            self, m: int,
+            t: int,
+            *,
+            min_value: int | None = None,
+            max_value: int | None = None
+            ):
+        self.elements: list[int] = []
+        self.m = m
+        self.t = t
+
+        self.min = self.min if isinstance(min_value, int) else int(self.t/4)
+        self.max = self.max if isinstance(max_value, int) else int(self.t/2)
+
+        self._generate_elements()
+        self.sum = sum(self.elements)
+
+        self.check_problem()
+
+    def _generate_elements(self):
+        for _ in range(self.m*3):
+            self.elements.append(random.randint(self.min, self.max))
+
+        while sum(self.elements) / self.m != self.t:
+            self.elements[random.randint(0, len(self.elements) - 1)] = random.randint(self.min, self.max)
 
 
 class Solution:
@@ -112,7 +144,7 @@ class Solution:
 class Solver:
     def __init__(
         self,
-        problem: Problem,
+        problem: Problem | RandomProblem,
         *,
         seed: int | str | float | None = None,
         shuffle: bool = True,
@@ -149,7 +181,7 @@ class Solver:
                 best_solution.make_multiset(solution.multiset.copy())
 
             if self.stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>12} {_} iterations")
+                print(f"{'stopped in:':.>15} {_} iterations")
                 break
         return best_solution
 
@@ -167,7 +199,7 @@ class Solver:
                 best_solution.make_multiset(solution.multiset)
 
             if self.stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>12} {_} iterations")
+                print(f"{'stopped in:':.>15} {_} iterations")
                 break
 
         return best_solution
@@ -185,7 +217,7 @@ class Solver:
                 best_solution.make_multiset(solution.multiset)
 
             if self.stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>12} {_} iterations")
+                print(f"{'stopped in:':.>15} {_} iterations")
                 break
 
         return best_solution
@@ -218,7 +250,7 @@ class Solver:
                 tabu_set.append(solution.multiset)
 
             if self.stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>12} {_} iterations")
+                print(f"{'stopped in:':.>15} {_} iterations")
                 break
 
         return best_solution
@@ -226,7 +258,7 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        Problem([1, 2, 3, 4, 5, 7, 8, 2, 1]),
+        RandomProblem(5, 30),
         shuffle=True,
         stop_on_best_solution=True,
         iterations=5040

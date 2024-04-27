@@ -12,14 +12,19 @@ def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..
             print("-" * 32, name if name else func.__name__, sep="\n")
 
             result = func(*args, **kwargs)
-            print(f"{'problem:':.>12} {result.__getattribute__('p')}")
-            print(f"{'result:':.>12} {result!r}")
-            print(f"{'goal:':.>12} {result.__getattribute__('current_goal')}")
+            print(f"{'problem:':.>15} {result.__getattribute__('p')}")
+            print(f"{'result:':.>15} {result!r}")
+            print(f"{'goal:':.>15} {result.__getattribute__('current_goal')}")
+
             print(
-                f"{'sum-T:':.>12}",
+                f"{'sum-T:':.>15}",
                 f"{result.__getattribute__('p').__getattribute__('t')}",
             )
-            print(f"{'seed:':.>12} {args[0].__getattribute__('seed')}")
+            print(
+                f"{'m:':.>15}",
+                f"{result.__getattribute__('p').__getattribute__('m')}",
+            )
+            print(f"{'seed:':.>15} {args[0].__getattribute__('seed')}")
 
             return result
 
@@ -36,7 +41,7 @@ def timer(func: Callable[..., T]) -> Callable[..., T]:
         end_time = perf_counter()
         total_time = end_time - start_time
 
-        print(f"{'timer:':.>12} {total_time:.6f} seconds")
+        print(f"{'timer:':.>15} {total_time:.6f} seconds")
 
         return result
     return wrapper
