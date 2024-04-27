@@ -101,12 +101,13 @@ class Solution:
 
     def best_neighbour(self):
         new_neighbour = Solution(Problem(self.multiset.copy()))
+        best_neighbour = Solution(Problem(self.multiset.copy()))
 
         for neighbour in self.neighbours:
             new_neighbour.make_multiset(neighbour)
-            if new_neighbour.current_goal > self.current_goal:
-                self.make_multiset(neighbour)
-        return self.multiset
+            if new_neighbour.current_goal > best_neighbour.current_goal:
+                best_neighbour.make_multiset(neighbour)
+        return best_neighbour.multiset
 
 
 T = TypeVar("T")
@@ -199,11 +200,45 @@ class Solver:
 
         return solution
 
+    @results("TABU SEARCH")
+    def tabu_search(self) -> Solution:
+        solution = Solution(self.p)
+        best_solution = Solution(self.p)
+
+        tabu_set: list[list[int]] = []
+        tabu_set.append(solution.multiset)
+
+        for _ in range(self.iterations):
+            solution.generate_neighbours()
+            print(len(solution.neighbours))
+            solution.neighbours = [
+                neighbour for neighbour in solution.neighbours
+                if neighbour not in tabu_set]
+
+            if len(solution.neighbours) == 0:
+                print("Ate my tail...", best_solution)
+                return best_solution
+
+            solution.make_multiset(solution.best_neighbour())
+            if solution.current_goal >= best_solution.current_goal:
+                best_solution.make_multiset(solution.multiset)
+
+            if solution.multiset not in tabu_set:
+                tabu_set.append(solution.multiset)
+
+            if best_solution.current_goal and self.stop_on_best_solution:
+                break
+
+        return best_solution
+
 
 if __name__ == "__main__":
-    s = Solver(Problem([1, 2, 3, 4, 5, 7]), seed=32, shuffle=True)
+    s = Solver(Problem([1, 2, 3, 4, 5, 7]), seed=42, shuffle=True, stop_on_best_solution=True)
+
     result: Solution = s.brute_force()
 
     result: Solution = s.random_hill_climb()
 
     result: Solution = s.deterministic_hill_climb()
+
+    result: Solution = s.tabu_search()
