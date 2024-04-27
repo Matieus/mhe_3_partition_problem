@@ -116,7 +116,7 @@ class Solver:
         *,
         seed: int | str | float | None = None,
         shuffle: bool = True,
-        iterations: int = 720,
+        iterations: int = 362_880,
         stop_on_best_solution: bool = True
     ):
 
@@ -142,15 +142,14 @@ class Solver:
         best_solution = Solution(self.p)
         perm = permutations(solution.multiset)
 
-        i = 0
-        for permutation in perm:
-            i += 1
-            solution.make_multiset(list(permutation))
+        for _ in range(self.iterations):
+            solution.make_multiset(list(perm.__next__()))
 
             if best_solution.current_goal < solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
             if self.stopper(best_solution.current_goal):
+                print(f"{'stopped in:':.>12} {_} iterations")
                 break
         return best_solution
 
@@ -163,11 +162,12 @@ class Solver:
         for _ in range(self.iterations):
             solution.generate_neighbours()
             solution.make_multiset(solution.best_neighbour())
-            
+
             if best_solution.current_goal <= solution.current_goal:
                 best_solution.make_multiset(solution.multiset)
 
             if self.stopper(best_solution.current_goal):
+                print(f"{'stopped in:':.>12} {_} iterations")
                 break
 
         return best_solution
@@ -185,6 +185,7 @@ class Solver:
                 best_solution.make_multiset(solution.multiset)
 
             if self.stopper(best_solution.current_goal):
+                print(f"{'stopped in:':.>12} {_} iterations")
                 break
 
         return best_solution
@@ -217,6 +218,7 @@ class Solver:
                 tabu_set.append(solution.multiset)
 
             if self.stopper(best_solution.current_goal):
+                print(f"{'stopped in:':.>12} {_} iterations")
                 break
 
         return best_solution
@@ -224,10 +226,10 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        Problem([1, 2, 3, 4, 5, 7]),
-        iterations=100,
+        Problem([1, 2, 3, 4, 5, 7, 8, 2, 1]),
         shuffle=True,
-        stop_on_best_solution=True
+        stop_on_best_solution=True,
+        iterations=5040
         )
 
     result: Solution = s.brute_force()
