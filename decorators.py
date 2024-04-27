@@ -1,4 +1,6 @@
 from typing import Any, Callable, TypeVar
+from time import perf_counter
+from functools import wraps
 
 
 T = TypeVar("T")
@@ -24,3 +26,17 @@ def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..
         return wrapper
 
     return decorator
+
+
+def timer(func: Callable[..., T]) -> Callable[..., T]:
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> T:
+        start_time = perf_counter()
+        result = func(*args, **kwargs)
+        end_time = perf_counter()
+        total_time = end_time - start_time
+
+        print(f"{'timer:':.>12} {total_time:.6f} seconds")
+
+        return result
+    return wrapper

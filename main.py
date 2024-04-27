@@ -1,6 +1,6 @@
 import random
 from itertools import permutations
-from decorators import results
+from decorators import results, timer
 
 
 class Problem:
@@ -133,13 +133,16 @@ class Solver:
             self.p.random_shuffle()
 
     @results("BRUTE FORCE")
+    @timer
     def brute_force(self) -> Solution:
         solution = Solution(self.p)
 
         best_solution = Solution(self.p)
         perm = permutations(solution.multiset)
 
+        i = 0
         for permutation in perm:
+            i += 1
             solution.make_multiset(list(permutation))
 
             if best_solution.current_goal < solution.current_goal:
@@ -150,6 +153,7 @@ class Solver:
         return best_solution
 
     @results("DETERMINISTIC HILL CLIMB")
+    @timer
     def deterministic_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
@@ -163,6 +167,7 @@ class Solver:
         return solution
 
     @results("RANDOM HILL CLIMB")
+    @timer
     def random_hill_climb(self) -> Solution:
         solution = Solution(self.p)
 
@@ -176,6 +181,7 @@ class Solver:
         return solution
 
     @results("TABU SEARCH")
+    @timer
     def tabu_search(self) -> Solution:
         solution = Solution(self.p)
         best_solution = Solution(self.p)
@@ -208,10 +214,11 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        Problem([1, 2, 3, 4, 5, 7]),
+        Problem([1, 2, 3, 4, 5, 7, 8, 2, 1]),
+        iterations=362_880,
         seed=42,
         shuffle=True,
-        stop_on_best_solution=True
+        stop_on_best_solution=False
         )
 
     result: Solution = s.brute_force()
