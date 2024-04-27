@@ -232,14 +232,14 @@ class Solver:
         solution = Solution(self.p)
         best_solution = Solution(self.p)
 
-        tabu_set: list[list[int]] = []
-        tabu_set.append(solution.multiset)
+        tabu_set: set[tuple[int, ...]] = set()
+        tabu_set.add(tuple(solution.multiset))
 
         for _ in range(self.iterations):
             solution.generate_neighbours()
             solution.neighbours = [
                 neighbour for neighbour in solution.neighbours
-                if neighbour not in tabu_set]
+                if tuple(neighbour) not in tabu_set]
 
             if len(solution.neighbours) == 0:
                 # "Ate my tail..."
@@ -248,10 +248,9 @@ class Solver:
 
             solution.make_multiset(solution.best_neighbour())
             if solution.current_goal > best_solution.current_goal:
-                best_solution.make_multiset(solution.multiset)
+                best_solution.make_multiset(solution.multiset.copy())
 
-            if solution.multiset not in tabu_set:
-                tabu_set.append(solution.multiset)
+            tabu_set.add(tuple(solution.multiset.copy()))
 
             if self.stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
