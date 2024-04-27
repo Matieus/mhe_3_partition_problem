@@ -137,11 +137,33 @@ class Solution:
 
                         self.neighbours.append(new_neighbour)
 
+    def neighbours_generator(self):
+        yield self.multiset
+        for eidx1 in range(0, len(self.multiset)):
+            for eidx2 in range(0, len(self.multiset)):
+                if not (eidx1 // 3 == eidx2 // 3):
+                    new_neighbour = self.multiset.copy()
+                    (new_neighbour[eidx1], new_neighbour[eidx2]) = (
+                        new_neighbour[eidx2],
+                        new_neighbour[eidx1],
+                    )
+                    yield new_neighbour
+
     def best_neighbour(self):
         new_neighbour = Solution(self.p)
         best_neighbour = Solution(self.p)
 
         for neighbour in self.neighbours:
+            new_neighbour.make_multiset(neighbour)
+            if new_neighbour.current_goal > best_neighbour.current_goal:
+                best_neighbour.make_multiset(neighbour)
+        return best_neighbour.multiset
+
+    def best_neighbour_generator(self):
+        new_neighbour = Solution(self.p)
+        best_neighbour = Solution(self.p)
+
+        for neighbour in self.neighbours_generator():
             new_neighbour.make_multiset(neighbour)
             if new_neighbour.current_goal > best_neighbour.current_goal:
                 best_neighbour.make_multiset(neighbour)
@@ -199,8 +221,7 @@ class Solver:
         best_solution = Solution(self.p)
 
         for _ in range(self.iterations):
-            solution.generate_neighbours()
-            solution.make_multiset(solution.best_neighbour())
+            solution.make_multiset(solution.best_neighbour_generator())
 
             if best_solution.current_goal <= solution.current_goal:
                 best_solution.make_multiset(solution.multiset)
@@ -239,9 +260,8 @@ class Solver:
         tabu_set.add(tuple(solution.multiset))
 
         for _ in range(self.iterations):
-            solution.generate_neighbours()
             solution.neighbours = [
-                neighbour for neighbour in solution.neighbours
+                neighbour for neighbour in solution.neighbours_generator()
                 if tuple(neighbour) not in tabu_set]
 
             if len(solution.neighbours) == 0:
@@ -264,11 +284,11 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        Problem([1, 13, 1, 10, 2, 3, 5, 5, 5, 6, 3, 6, 9, 4, 2, 11, 1, 3]),
+        Problem([1, 13, 1, 10, 2, 3, 5, 5, 5, 6, 3, 6, 9, 4, 2, 11, 1, 3, 5, 5, 5, 8, 3, 4]),
         shuffle=True,
         stop_on_best_solution=True,
         iterations=5040,
-        seed=500
+        seed=34345356475758685
         )
 
     result: Solution = s.brute_force()
