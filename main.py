@@ -276,16 +276,14 @@ class Solver:
         tabu_set.add(tuple(solution.multiset))
 
         for _ in range(self.iterations):
-            neighbours = [
-                neighbour for neighbour in solution.simplified_neighbors_generator()
-                if tuple(neighbour) not in tabu_set]
 
-            if len(neighbours) == 0:
-                # "Ate my tail..."
-                print("Ate my tail...")
+            solution.make_multiset(
+                best_solution.best_neighbour().multiset)
+
+            if tuple(solution.multiset) in tabu_set:
+                print(f"Ate my tail... in {_}")
                 return best_solution
 
-            solution.make_multiset(solution.best_neighbour().multiset)
             if solution.current_goal > best_solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
@@ -307,9 +305,9 @@ if __name__ == "__main__":
         stop_on_best_solution=True,
         )
 
-    result: Solution = s.brute_force()
+    # result: Solution = s.brute_force()
 
-    result: Solution = s.random_hill_climb()
+    # result: Solution = s.random_hill_climb()
 
     # result: Solution = s.deterministic_hill_climb()
 
