@@ -19,7 +19,8 @@ class Problem:
             raise ValueError("The problem length cannot be zero")
 
         if not len(self.elements) % 3 == 0:
-            raise ValueError("Invalid problem length. The length should be divisible by 3")
+            raise ValueError(
+                "Invalid problem length. The length should be divisible by 3")
 
         if self.sum != self.t*self.m:
             print(
@@ -51,8 +52,8 @@ class RandomProblem(Problem):
         self.m = m
         self.t = t
 
-        self.min = self.min if isinstance(min_value, int) else int(self.t/4)
-        self.max = self.max if isinstance(max_value, int) else int(self.t/2)
+        self.min = min_value if isinstance(min_value, int) else int(self.t/4)
+        self.max = max_value if isinstance(max_value, int) else int(self.t/2)
         self.attempts = attempts
         self.seed = seed
         random.seed(self.seed)
@@ -67,7 +68,9 @@ class RandomProblem(Problem):
             self.elements.append(random.randint(self.min, self.max))
 
         for _ in range(self.attempts):
-            self.elements[random.randint(0, len(self.elements) - 1)] = random.randint(self.min, self.max)
+            idx = random.randint(0, len(self.elements) - 1)
+            self.elements[idx] = random.randint(self.min, self.max)
+
             if sum(self.elements) / self.m == self.t:
                 break
 
@@ -86,7 +89,11 @@ class Solution:
 
     def __repr__(self) -> str:
         return ", ".join(
-            [f"{self.multiset[idx:idx+3]}" for idx in range(0, len(self.multiset), 3)]
+            [
+                f"{self.multiset[idx:idx+3]}"
+                for idx in range(0, len(self.multiset), 3)
+
+                ]
         )
 
     def make_multiset(self, elements: list[int]):
@@ -95,11 +102,18 @@ class Solution:
 
     def goal(self):
         triplets_sum: list[int] = [
-            sum(self.multiset[idx : idx + 3]) for idx in range(0, len(self.multiset), 3)
+            sum(self.multiset[idx: idx + 3])
+            for idx in range(0, len(self.multiset), 3)
         ]
 
         self.current_goal = (
-            sum([1 if x == self.p.t else 0.5 / abs(self.p.t - x) for x in triplets_sum])
+            sum(
+                [
+                    1 if x == self.p.t
+                    else 0.5 / abs(self.p.t - x)
+                    for x in triplets_sum
+                    ]
+                    )
             / self.p.m
         )
 
@@ -121,45 +135,30 @@ class Solution:
         )
         self.goal()
 
-    def generate_neighbours(self):
-        self.neighbours: list[list[int]] = []
-        self.neighbours.append(self.multiset)
-
-        for eidx1 in range(0, len(self.multiset)):
-            for eidx2 in range(0, len(self.multiset)):
-                if not (eidx1 // 3 == eidx2 // 3):
-                    new_neighbour = self.multiset.copy()
-                    (new_neighbour[eidx1], new_neighbour[eidx2]) = (
-                        new_neighbour[eidx2],
-                        new_neighbour[eidx1],
-                    )
-                    if new_neighbour not in self.neighbours:
-
-                        self.neighbours.append(new_neighbour)
-
     def neighbours_generator(self):
         yield self.multiset
         for eidx1 in range(0, len(self.multiset)):
             for eidx2 in range(0, len(self.multiset)):
                 if not (eidx1 // 3 == eidx2 // 3):
                     new_neighbour = self.multiset.copy()
-                    (new_neighbour[eidx1], new_neighbour[eidx2]) = (
+                    (new_neighbour[eidx1],
+                     new_neighbour[eidx2]) = (
                         new_neighbour[eidx2],
                         new_neighbour[eidx1],
                     )
                     yield new_neighbour
 
-    def best_neighbour(self):
-        new_neighbour = Solution(self.p)
-        best_neighbour = Solution(self.p)
+    def best_neighbour(self) -> "Solution":
+        """
+        The function will search for the best neighbor
+        of the current solution from generator
 
-        for neighbour in self.neighbours:
-            new_neighbour.make_multiset(neighbour)
-            if new_neighbour.current_goal > best_neighbour.current_goal:
-                best_neighbour.make_multiset(neighbour)
-        return best_neighbour.multiset
+        Parameters:
 
-    def best_neighbour_generator(self):
+        Returns:
+        Solution: best neighbour for current solution
+        """
+
         new_neighbour = Solution(self.p)
         best_neighbour = Solution(self.p)
 
@@ -167,7 +166,27 @@ class Solution:
             new_neighbour.make_multiset(neighbour)
             if new_neighbour.current_goal > best_neighbour.current_goal:
                 best_neighbour.make_multiset(neighbour)
-        return best_neighbour.multiset
+        return best_neighbour
+
+    def simplified_neighbors_generator(self):
+        yield self.multiset
+        for eidx in range(0, len(self.multiset)):
+            new_neighbour = self.multiset.copy()
+            (new_neighbour[0], new_neighbour[eidx]) = (
+                new_neighbour[eidx],
+                new_neighbour[0],
+            )
+            yield new_neighbour
+
+    def best_simplified_neighbour(self):
+        new_neighbour = Solution(self.p)
+        best_neighbour = Solution(self.p)
+
+        for neighbour in self.simplified_neighbors_generator():
+            new_neighbour.make_multiset(neighbour)
+            if new_neighbour.current_goal > best_neighbour.current_goal:
+                best_neighbour.make_multiset(neighbour)
+        return best_neighbour
 
 
 class Solver:
@@ -217,14 +236,11 @@ class Solver:
     @results("DETERMINISTIC HILL CLIMB")
     @timer
     def deterministic_hill_climb(self) -> Solution:
-        solution = Solution(self.p)
         best_solution = Solution(self.p)
 
         for _ in range(self.iterations):
-            solution.make_multiset(solution.best_neighbour_generator())
-
-            if best_solution.current_goal <= solution.current_goal:
-                best_solution.make_multiset(solution.multiset)
+            best_solution.make_multiset(
+                best_solution.best_neighbour().multiset)
 
             if self._stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
@@ -260,17 +276,17 @@ class Solver:
         tabu_set.add(tuple(solution.multiset))
 
         for _ in range(self.iterations):
-            solution.neighbours = [
-                neighbour for neighbour in solution.neighbours_generator()
+            neighbours = [
+                neighbour for neighbour in solution.simplified_neighbors_generator()
                 if tuple(neighbour) not in tabu_set]
 
-            if len(solution.neighbours) == 0:
+            if len(neighbours) == 0:
                 # "Ate my tail..."
                 print("Ate my tail...")
                 return best_solution
 
-            solution.make_multiset(solution.best_neighbour())
-            if solution.current_goal >= best_solution.current_goal:
+            solution.make_multiset(solution.best_neighbour().multiset)
+            if solution.current_goal > best_solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
             tabu_set.add(tuple(solution.multiset.copy()))
@@ -284,17 +300,17 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        Problem([1, 13, 1, 10, 2, 3, 5, 5, 5, 6, 3, 6, 9, 4, 2, 11, 1, 3, 5, 5, 5, 8, 3, 4]),
+        Problem([36, 36, 32, 39, 40, 45, 30, 41, 40, 30, 36, 44, 35, 35, 37, 38, 49, 42, 50,
+         50, 30, 29, 34, 46, 34, 41, 40, 37, 34, 28, 31, 31, 36, 26, 32, 32, 39, 20,
+         30, 34, 38, 50, 35, 48, 30]),
         shuffle=True,
         stop_on_best_solution=True,
-        iterations=5040,
-        seed=34345356475758685
         )
 
     result: Solution = s.brute_force()
 
     result: Solution = s.random_hill_climb()
 
-    result: Solution = s.deterministic_hill_climb()
+    # result: Solution = s.deterministic_hill_climb()
 
     result: Solution = s.tabu_search()
