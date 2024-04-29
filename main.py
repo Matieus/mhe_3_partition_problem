@@ -94,6 +94,25 @@ class Solution:
 
                 ]
         )
+    
+    def __format__(self, f: str):
+        if f == "indent":
+            return ",".join(
+                [
+                    f"\n{'':>15} {self.multiset[idx:idx+3]}"
+                    for idx in range(0, len(self.multiset), 3)
+
+                    ]
+            )
+        if f == "indent_triplets_goal":
+            return ",".join(
+                [
+                    f"\n{'':>16}" + f"{str(self.multiset[idx:idx+3]):<20} {sum(self.multiset[idx:idx+3])}"
+                    for idx in range(0, len(self.multiset), 3)
+
+                    ]
+            )
+        return self.__repr__()
 
     def make_multiset(self, elements: list[int]):
         self.multiset = elements.copy()

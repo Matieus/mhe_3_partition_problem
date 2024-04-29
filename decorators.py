@@ -13,7 +13,7 @@ def results(name: str | None = None) -> Callable[[Callable[..., T]], Callable[..
 
             result = func(*args, **kwargs)
             print(f"{'problem:':.>15} {result.__getattribute__('p')}")
-            print(f"{'result:':.>15} {result!r}")
+            print(f"{'result:':.>15} {result:indent_triplets_goal}")
             print(f"{'goal:':.>15} {result.__getattribute__('current_goal')}")
 
             print(
