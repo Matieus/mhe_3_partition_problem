@@ -176,13 +176,16 @@ class Solution:
             yield new_neighbour
 
     def best_simplified_neighbour(self):
-        new_neighbour = Solution(self.p)
-        best_neighbour = Solution(self.p)
+        best_neighbour = self.multiset
+        best_goal = self.goal(best_neighbour)
 
         for neighbour in self.simplified_neighbors_generator():
-            new_neighbour.make_multiset(neighbour)
-            if new_neighbour.current_goal > best_neighbour.current_goal:
-                best_neighbour.make_multiset(neighbour)
+            neighbour_goal = self.goal(neighbour)
+
+            if neighbour_goal > best_goal:
+                best_neighbour = neighbour
+                best_goal = neighbour_goal
+
         return best_neighbour
 
 
@@ -298,14 +301,12 @@ if __name__ == "__main__":
         Problem([12, 28, 10, 10, 15, 25, 31, 1, 18, 22, 23, 5, 40, 4, 6, 33, 7, 10, 10, 30, 10, 25, 24, 1, 48, 1, 1, 42, 2, 6, 40, 4, 6, 21, 21, 8]),
         shuffle=True,
         stop_on_best_solution=True,
-        iterations=5040,
-        seed=45
         )
 
-    result: Solution = s.brute_force()
+    # result: Solution = s.brute_force()
 
     result: Solution = s.random_hill_climb()
 
-    result: Solution = s.deterministic_hill_climb()
+    # result: Solution = s.deterministic_hill_climb()
 
     result: Solution = s.tabu_search()
