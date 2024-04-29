@@ -81,8 +81,7 @@ class Solution:
         self.multiset: list[int]
         self.make_multiset(self.p.elements.copy())
 
-        self.current_goal: float = 0
-        self.goal()
+        self.current_goal = self.goal(self.multiset)
 
     def __str__(self):
         return ", ".join([str(number) for number in self.multiset])
@@ -98,29 +97,25 @@ class Solution:
 
     def make_multiset(self, elements: list[int]):
         self.multiset = elements.copy()
-        self.goal()
+        self.current_goal = self.goal(self.multiset)
 
-    def goal(self):
+    def goal(self, elements: list[int]) -> float:
         triplets_sum: list[int] = [
-            sum(self.multiset[idx: idx + 3])
-            for idx in range(0, len(self.multiset), 3)
+            sum(elements[idx: idx + 3])
+            for idx in range(0, len(elements), 3)
         ]
 
-        self.current_goal = (
-            sum(
+        return sum(
                 [
                     1 if x == self.p.t
                     else 0.5 / abs(self.p.t - x)
                     for x in triplets_sum
                     ]
-                    )
-            / self.p.m
-        )
+                    ) / self.p.m
 
     def random_shuffle(self):
-        new_solution = self.p.elements.copy()
-        random.shuffle(new_solution)
-        self.make_multiset(new_solution)
+        random.shuffle(self.multiset)
+        self.current_goal = self.goal(self.multiset)
 
     def random_modify(self):
         midx1 = random.randint(0, len(self.multiset) - 1)
@@ -133,7 +128,7 @@ class Solution:
             self.multiset[midx2],
             self.multiset[midx1],
         )
-        self.goal()
+        self.current_goal = self.goal(self.multiset)
 
     def neighbours_generator(self):
         yield self.multiset
@@ -148,7 +143,7 @@ class Solution:
                     )
                     yield new_neighbour
 
-    def best_neighbour(self) -> "Solution":
+    def best_neighbour(self) -> list[int]:
         """
         The function will search for the best neighbor
         of the current solution from generator
@@ -158,14 +153,16 @@ class Solution:
         Returns:
         Solution: best neighbour for current solution
         """
-
-        new_neighbour = Solution(self.p)
-        best_neighbour = Solution(self.p)
+        best_neighbour = self.multiset
+        best_goal = self.goal(best_neighbour)
 
         for neighbour in self.neighbours_generator():
-            new_neighbour.make_multiset(neighbour)
-            if new_neighbour.current_goal > best_neighbour.current_goal:
-                best_neighbour.make_multiset(neighbour)
+            neighbour_goal = self.goal(neighbour)
+
+            if neighbour_goal > best_goal:
+                best_neighbour = neighbour
+                best_goal = neighbour_goal
+
         return best_neighbour
 
     def simplified_neighbors_generator(self):
@@ -240,7 +237,7 @@ class Solver:
 
         for _ in range(self.iterations):
             best_solution.make_multiset(
-                best_solution.best_neighbour().multiset)
+                best_solution.best_neighbour())
 
             if self._stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
@@ -278,7 +275,7 @@ class Solver:
         for _ in range(self.iterations):
 
             solution.make_multiset(
-                best_solution.best_neighbour().multiset)
+                best_solution.best_neighbour())
 
             if tuple(solution.multiset) in tabu_set:
                 print(f"Ate my tail... in {_}")
@@ -298,17 +295,17 @@ class Solver:
 
 if __name__ == "__main__":
     s = Solver(
-        Problem([36, 36, 32, 39, 40, 45, 30, 41, 40, 30, 36, 44, 35, 35, 37, 38, 49, 42, 50,
-         50, 30, 29, 34, 46, 34, 41, 40, 37, 34, 28, 31, 31, 36, 26, 32, 32, 39, 20,
-         30, 34, 38, 50, 35, 48, 30]),
+        Problem([12, 28, 10, 10, 15, 25, 31, 1, 18, 22, 23, 5, 40, 4, 6, 33, 7, 10, 10, 30, 10, 25, 24, 1, 48, 1, 1, 42, 2, 6, 40, 4, 6, 21, 21, 8]),
         shuffle=True,
         stop_on_best_solution=True,
+        iterations=5040,
+        seed=45
         )
 
-    # result: Solution = s.brute_force()
+    result: Solution = s.brute_force()
 
-    # result: Solution = s.random_hill_climb()
+    result: Solution = s.random_hill_climb()
 
-    # result: Solution = s.deterministic_hill_climb()
+    result: Solution = s.deterministic_hill_climb()
 
     result: Solution = s.tabu_search()
