@@ -1,6 +1,6 @@
 import random
 from itertools import permutations
-from decorators import results, timer
+from decorators import results
 from math import exp
 import argparse
 
@@ -84,6 +84,7 @@ class Solution:
         self.make_multiset(self.p.elements.copy())
 
         self.current_goal = self.goal(self.multiset)
+        self.stopped_in = 0
 
     def __str__(self):
         return ", ".join([str(number) for number in self.multiset])
@@ -230,7 +231,7 @@ class Solver:
 
         if seed:
             random.seed(seed)
-        if temp_0:
+        if temp_0 is None:
             self.temp_0: float = 1000.0
         if shuffle:
             self.p.random_shuffle()
@@ -239,26 +240,30 @@ class Solver:
         return goal == 1.0 and self.stop_on_best_solution
 
     @results("BRUTE FORCE")
-    @timer
     def brute_force(self) -> Solution:
         solution = Solution(self.p)
 
         best_solution = Solution(self.p)
         perm = permutations(solution.multiset)
+        counter = 0
 
-        for _ in range(self.iterations):
-            solution.make_multiset(list(perm.__next__()))
+        try:
+            while True:
+                solution.make_multiset(list(perm.__next__()))
+                counter += 1
 
-            if best_solution.current_goal < solution.current_goal:
-                best_solution.make_multiset(solution.multiset.copy())
+                if best_solution.current_goal < solution.current_goal:
+                    best_solution.make_multiset(solution.multiset.copy())
 
-            if self._stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>15} {_} iterations")
-                break
-        return best_solution
+                if self._stopper(best_solution.current_goal):
+                    best_solution.stopped_in = counter
+                    return best_solution
+
+        except StopIteration:
+            best_solution.stopped_in = counter
+            return best_solution
 
     @results("DETERMINISTIC HILL CLIMB")
-    @timer
     def deterministic_hill_climb(self) -> Solution:
         best_solution = Solution(self.p)
 
@@ -267,13 +272,13 @@ class Solver:
                 best_solution.best_neighbour())
 
             if self._stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>15} {_} iterations")
-                break
-
+                best_solution.stopped_in = _
+                return best_solution
+            
+        best_solution.stopped_in = self.iterations
         return best_solution
 
     @results("RANDOM HILL CLIMB")
-    @timer
     def random_hill_climb(self) -> Solution:
         solution = Solution(self.p)
         best_solution = Solution(self.p)
@@ -282,16 +287,17 @@ class Solver:
             solution.random_modify()
 
             if best_solution.current_goal <= solution.current_goal:
-                best_solution.make_multiset(solution.multiset)
+                best_solution.make_multiset(solution.multiset.copy())
 
             if self._stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>15} {_} iterations")
-                break
+                best_solution.stopped_in = _
+                return best_solution
+            
 
+        best_solution.stopped_in = self.iterations
         return best_solution
 
     @results("TABU SEARCH")
-    @timer
     def tabu_search(self) -> Solution:
         solution = Solution(self.p)
         best_solution = Solution(self.p)
@@ -318,13 +324,14 @@ class Solver:
                 best_solution.make_multiset(solution.multiset.copy())
 
             if self._stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>15} {_} iterations")
-                break
+                best_solution.stopped_in = _
+                return best_solution
+            
 
+        best_solution.stopped_in = self.iterations
         return best_solution
 
     @results("SIM ANNEALING")
-    @timer
     def sim_annealing(self) -> Solution:
         solution = Solution(self.p)
         best_solution = Solution(self.p)
@@ -347,11 +354,12 @@ class Solver:
                     solution.make_multiset(new_solution.multiset.copy())
 
             if self._stopper(best_solution.current_goal):
-                print(f"{'stopped in:':.>15} {_} iterations")
-                break
+                best_solution.stopped_in = _
+                return best_solution
+            
 
+        best_solution.stopped_in = self.iterations
         return best_solution
-
 
 def allowed_methods(method: str):
     methods = [k for k in Solver.__dict__ if not k.startswith("_")]
@@ -362,6 +370,14 @@ def allowed_methods(method: str):
     return method
 
 
+def parse_int_list(s: str) -> list[int]:
+    try:
+        int_list = [int(item) for item in s.split(",")]
+        return int_list
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"The value: {s} in not int")
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="3-partition problem solver")
@@ -369,7 +385,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--shuffle', type=bool, help="shuffle problem", required=False)
     parser.add_argument(
-        '--stop_on_best_solution', type=bool, help="Stop on found best solution (goal=1.0)", required=False)
+        '--stop_on_best_solution', type=bool, help="Stop on found best solution (goal=1.0)", default=True, required=False)
 
     parser.add_argument(
         '--iterations', type=int, help="Set number of iterations", default=362_880)
@@ -379,11 +395,12 @@ if __name__ == "__main__":
 
     parser.add_argument('--method', type=allowed_methods, help="name of method to run", required=True)
 
+    parser.add_argument('--problem', type=parse_int_list, help="Problem", required=True)
 
     args = parser.parse_args()
 
     s = Solver(
-        Problem([12, 10, 15, 25, 3, 22, 25, 8, 14, 24, 23, 19]),
+        Problem(args.problem),
         shuffle=args.shuffle,
         stop_on_best_solution=args.stop_on_best_solution,
         iterations=args.iterations
@@ -391,17 +408,3 @@ if __name__ == "__main__":
 
     results = s.__getattribute__(args.method)
     results()
-
-
-"""
-
-    # result: Solution = s.brute_force()
-
-    # result: Solution = s.random_hill_climb()
-
-    # result: Solution = s.deterministic_hill_climb()
-
-    # result: Solution = s.tabu_search()
-    # result = s.sim_annealing()
-
-"""
