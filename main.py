@@ -1,6 +1,8 @@
 import random
 from itertools import permutations
 from decorators import results, timer
+from math import exp
+import argparse
 
 
 class Problem:
@@ -94,7 +96,7 @@ class Solution:
 
                 ]
         )
-    
+
     def __format__(self, f: str):
         if f == "indent":
             return ",".join(
@@ -216,7 +218,8 @@ class Solver:
         seed: int | str | float | None = None,
         shuffle: bool = True,
         iterations: int = 362_880,
-        stop_on_best_solution: bool = True
+        stop_on_best_solution: bool = True,
+        temp_0: float | None = None
     ):
 
         self.p: Problem = problem
@@ -227,6 +230,8 @@ class Solver:
 
         if seed:
             random.seed(seed)
+        if temp_0:
+            self.temp_0: float = 1000.0
         if shuffle:
             self.p.random_shuffle()
 
@@ -291,22 +296,55 @@ class Solver:
         solution = Solution(self.p)
         best_solution = Solution(self.p)
 
-        tabu_set: set[tuple[int, ...]] = set()
-        tabu_set.add(tuple(solution.multiset))
+        tabu_list: list[list[int]] = []
+        tabu_list.append(list(solution.multiset))
+        best_goal = best_solution.current_goal
 
         for _ in range(self.iterations):
+            for neighbour in best_solution.neighbours_generator():
+                if neighbour not in tabu_list:
+                    neighbour_goal = solution.goal(neighbour)
 
-            solution.make_multiset(
-                best_solution.best_neighbour())
+                    if neighbour_goal > best_goal:
+                        best_neighbour = neighbour
+                        best_goal = neighbour_goal
 
-            if tuple(solution.multiset) in tabu_set:
-                print(f"Ate my tail... in {_}")
-                return best_solution
+                        solution.make_multiset(best_neighbour)
+
+            if solution.multiset not in tabu_list:
+                tabu_list.append(solution.multiset)
 
             if solution.current_goal > best_solution.current_goal:
                 best_solution.make_multiset(solution.multiset.copy())
 
-            tabu_set.add(tuple(solution.multiset.copy()))
+            if self._stopper(best_solution.current_goal):
+                print(f"{'stopped in:':.>15} {_} iterations")
+                break
+
+        return best_solution
+
+    @results("SIM ANNEALING")
+    @timer
+    def sim_annealing(self) -> Solution:
+        solution = Solution(self.p)
+        best_solution = Solution(self.p)
+        new_solution = Solution(self.p)
+
+        for _ in range(1, self.iterations):
+            new_solution.random_modify()
+
+            if solution.current_goal >= new_solution.current_goal:
+                solution.make_multiset(new_solution.multiset.copy())
+
+                if solution.current_goal >= best_solution.current_goal:
+                    best_solution.make_multiset(new_solution.multiset.copy())
+
+            else:
+                temp_i  = lambda i: self.temp_0 / i
+                p = exp(-abs(new_solution.current_goal - solution.current_goal) / temp_i(_))
+
+                if random.uniform(0, 1) < p:
+                    solution.make_multiset(new_solution.multiset.copy())
 
             if self._stopper(best_solution.current_goal):
                 print(f"{'stopped in:':.>15} {_} iterations")
@@ -315,17 +353,55 @@ class Solver:
         return best_solution
 
 
+def allowed_methods(method: str):
+    methods = [k for k in Solver.__dict__ if not k.startswith("_")]
+    print(methods)
+    if method not in methods:
+        raise argparse.ArgumentTypeError(f"not allowed method: {', '.join(method)}")
+
+    return method
+
+
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description="3-partition problem solver")
+
+    parser.add_argument(
+        '--shuffle', type=bool, help="shuffle problem", required=False)
+    parser.add_argument(
+        '--stop_on_best_solution', type=bool, help="Stop on found best solution (goal=1.0)", required=False)
+
+    parser.add_argument(
+        '--iterations', type=int, help="Set number of iterations", default=362_880)
+
+    parser.add_argument(
+        '--seed', type=int, help="Set seed for problem", required=False)
+
+    parser.add_argument('--method', type=allowed_methods, help="name of method to run", required=True)
+
+
+    args = parser.parse_args()
+
     s = Solver(
-        Problem([12, 28, 10, 10, 15, 25, 31, 1, 18, 22, 23, 5, 40, 4, 6, 33, 7, 10, 10, 30, 10, 25, 24, 1, 48, 1, 1, 42, 2, 6, 40, 4, 6, 21, 21, 8]),
-        shuffle=True,
-        stop_on_best_solution=True,
+        Problem([12, 10, 15, 25, 3, 22, 25, 8, 14, 24, 23, 19]),
+        shuffle=args.shuffle,
+        stop_on_best_solution=args.stop_on_best_solution,
+        iterations=args.iterations
         )
+
+    results = s.__getattribute__(args.method)
+    results()
+
+
+"""
 
     # result: Solution = s.brute_force()
 
-    result: Solution = s.random_hill_climb()
+    # result: Solution = s.random_hill_climb()
 
     # result: Solution = s.deterministic_hill_climb()
 
-    result: Solution = s.tabu_search()
+    # result: Solution = s.tabu_search()
+    # result = s.sim_annealing()
+
+"""
